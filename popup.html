@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FocusGuard Insights</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* Popup-specific overrides */
+    html, body {
+      width: 340px;
+      min-height: 560px;
+      overflow-x: hidden;
+      background: var(--bg);
+    }
+
+    #popup-root {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+
+    /* ── Top bar ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-1);
+      flex-shrink: 0;
+    }
+
+    /* ── Hero: mascot + today number ── */
+    #hero {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    #mascot-col {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    #mascot-wrap {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #mascot-mood-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+    #hero-right {
+      flex: 1;
+      padding-top: 4px;
+    }
+    #hero-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+    #hero-distance {
+      font-family: var(--font-head);
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+    #hero-reels-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    #mascot-tip-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 11px;
+    }
+    #tip-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--purple);
+      margin-bottom: 2px;
+    }
+    #tip-text {
+      font-size: 11px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    /* ── Platform chips ── */
+    #platform-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Time chip ── */
+    #time-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    #time-label { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+    #time-value {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--amber);
+    }
+
+    /* ── Comparison visual ── */
+    #comp-section {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    #comp-dramatic {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      font-family: var(--font-head);
+      letter-spacing: -0.2px;
+    }
+    #comp-dramatic .drama-highlight {
+      color: var(--blue);
+    }
+    #comp-dramatic .drama-passed {
+      color: var(--green);
+    }
+    #comp-hero-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    #comp-hero-emoji {
+      font-size: 52px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    #comp-hero-right { flex: 1; min-width: 0; }
+    #comp-headline {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.45;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    #comp-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 9px;
+    }
+    #comp-prog-track {
+      height: 7px;
+      background: var(--surface-2);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    #comp-prog-fill {
+      height: 7px;
+      border-radius: 999px;
+      background: var(--blue);
+      transition: width 0.4s ease;
+      min-width: 3px;
+    }
+    #comp-prog-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+    #comp-chips {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .comp-chip {
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-1);
+    }
+    .comp-chip--passed {
+      border-color: var(--green);
+      background: rgba(34,197,94,0.07);
+    }
+    .comp-chip--next {
+      border-color: var(--blue);
+      background: rgba(79,142,247,0.07);
+    }
+    .comp-chip__top {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .comp-chip__emoji { font-size: 20px; line-height: 1; }
+    .comp-chip__tag {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+    .comp-chip--passed .comp-chip__tag { color: var(--green); }
+    .comp-chip--next   .comp-chip__tag { color: var(--blue); }
+    .comp-chip__name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .comp-chip__sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ── Streak ── */
+    #streak-section {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    #streak-info {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+
+    /* ── Bottom CTA ── */
+    #bottom-section {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    /* ── Tone indicator ── */
+    #tone-bar {
+      padding: 8px 16px;
+      background: rgba(239,68,68,0.05);
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* ── Zero state ── */
+    #zero-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+      text-align: center;
+      gap: 10px;
+    }
+    #zero-state .zero-title {
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    #zero-state .zero-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 220px;
+    }
+  </style>
+</head>
+<body>
+<div id="popup-root">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="topbar__logo">
+      <div class="topbar__logo-icon">
+        <!-- shield icon -->
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1L2 3.5V7C2 9.8 4.3 12.3 7 13C9.7 12.3 12 9.8 12 7V3.5L7 1Z" fill="white" opacity=".9"/>
+          <circle cx="7" cy="7.5" r="1.5" fill="white"/>
+        </svg>
+      </div>
+      <span class="topbar__logo-name">FocusGuard Insights</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="live-dot" title="Tracking active">
+        <div class="live-dot__circle"></div>
+        <span>Active</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO: mascot + distance -->
+  <div id="hero">
+    <div id="mascot-col">
+      <div id="mascot-wrap"></div>
+      <div id="mascot-mood-label">Calm</div>
+    </div>
+    <div id="hero-right">
+      <div id="hero-eyebrow">Total distance today</div>
+      <div id="hero-distance" style="color:var(--blue);">0.0<span style="font-size:16px;font-weight:400;color:var(--text-secondary);"> m</span></div>
+      <div id="hero-reels-sub">No reels tracked yet</div>
+      <div id="mascot-tip-box">
+        <div id="tip-label">Mascot says</div>
+        <div id="tip-text">I'm watching. Start scrolling and I'll track everything.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLATFORM CHIPS -->
+  <div id="platform-row">
+    <div class="platform-chip">
+      <div class="platform-chip__header">
+        <div class="platform-chip__dot" style="background:#e1306c;"></div>
+        <div class="platform-chip__name">Instagram</div>
+      </div>
+      <div class="platform-chip__count font-head" id="ig-count">0</div>
+      <div class="platform-chip__sub">reels</div>
+    </div>
+    <div class="platform-chip">
+      <div class="platform-chip__header">
+        <div class="platform-chip__dot" style="background:#ff0000;"></div>
+        <div class="platform-chip__name">YouTube</div>
+      </div>
+      <div class="platform-chip__count font-head" id="yt-count">0</div>
+      <div class="platform-chip__sub">shorts</div>
+    </div>
+  </div>
+
+  <!-- TIME LOST -->
+  <div id="time-row">
+    <div id="time-label">Total time consumed today</div>
+    <div>
+      <span id="time-value">0m</span>
+      <span style="font-size:11px;color:var(--text-secondary);margin-left:4px;">lost</span>
+    </div>
+  </div>
+
+  <!-- COMPARISON -->
+  <div id="comp-section">
+    <div class="section-label">Your scroll in the real world</div>
+    <div id="comp-dramatic"></div>
+    <div id="comp-hero-row">
+      <div id="comp-hero-emoji">📚</div>
+      <div id="comp-hero-right">
+        <div id="comp-sub">0 reels = 0 m scrolled</div>
+        <div id="comp-prog-track">
+          <div id="comp-prog-fill" style="width:0%"></div>
+        </div>
+        <div id="comp-prog-labels">
+          <span>0 m</span>
+          <span id="comp-prog-you"></span>
+          <span id="comp-prog-target">1.5 m</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="comp-chips">
+      <div class="comp-chip comp-chip--passed" id="comp-chip-passed" style="display:none">
+        <div class="comp-chip__top">
+          <span class="comp-chip__emoji" id="comp-passed-emoji">📚</span>
+          <span class="comp-chip__tag">Passed</span>
+        </div>
+        <div class="comp-chip__name" id="comp-passed-name">Book stack</div>
+        <div class="comp-chip__sub"  id="comp-passed-sub">1.5 m · 100%</div>
+      </div>
+      <div class="comp-chip comp-chip--next" id="comp-chip-next" style="grid-column: 1 / -1">
+        <div class="comp-chip__top">
+          <span class="comp-chip__emoji" id="comp-next-emoji">📚</span>
+          <span class="comp-chip__tag">Next up</span>
+        </div>
+        <div class="comp-chip__name" id="comp-next-name">Book stack</div>
+        <div class="comp-chip__sub"  id="comp-next-sub">1.5 m away</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STREAK -->
+  <div id="streak-section">
+    <div class="section-label">Clean ascent streak</div>
+    <div class="streak-row" id="streak-dots"></div>
+    <div id="streak-info">Stay under 20 reels/day to keep your streak.</div>
+  </div>
+
+  <!-- TONE BAR (visible when level > 1) -->
+  <div id="tone-bar" style="display:none;"></div>
+
+  <!-- BOTTOM ACTIONS -->
+  <div id="bottom-section">
+    <button class="btn-primary" id="open-dashboard-btn">View full dashboard</button>
+    <div class="live-dot" style="justify-content:center;">
+      <div class="live-dot__circle"></div>
+      <span style="font-size:11px;color:var(--text-secondary);">Tracking Instagram Reels + YouTube Shorts</span>
+    </div>
+  </div>
+
+</div>
+
+<script src="mascot.js"></script>
+<script src="comparison.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>

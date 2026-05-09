@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FocusGuard Insights — Dashboard</title>
+  <link rel="stylesheet" href="style.css"/>
+  
+  <style>
+    /* ── Dashboard-specific layout ── */
+    html, body {
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    /* ── Top navigation bar ── */
+    #d-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 24px;
+      background: var(--surface-1);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    #d-nav-left  { display: flex; align-items: center; gap: 12px; }
+    #d-nav-right { display: flex; align-items: center; gap: 10px; }
+    .d-nav-brand {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: .02em;
+    }
+
+    /* ── Two-column body layout ── */
+    #d-body {
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      min-height: calc(100vh - 55px);
+    }
+
+    /* ── LEFT SIDEBAR ── */
+    #d-sidebar {
+      border-right: 1px solid var(--border);
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+      max-height: calc(100vh - 55px);
+    }
+
+    /* Mascot card in sidebar */
+    #side-mascot-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    #side-mascot-wrap {
+      width: 90px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #side-mood-pill {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 99px;
+      border: 1px solid;
+    }
+    #side-mascot-msg {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: center;
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    /* Platform breakdown in sidebar */
+    .pb-item {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 11px 13px;
+    }
+    .pb-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 7px;
+    }
+    .pb-name-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .pb-count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .pb-stats {
+      display: flex;
+      gap: 14px;
+      margin-top: 7px;
+    }
+    .pb-stat {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .pb-stat span { color: var(--text-primary); font-weight: 500; }
+
+    /* ── MAIN CONTENT AREA ── */
+    #d-main {
+      padding: 22px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+      max-height: calc(100vh - 55px);
+    }
+
+    /* Today's hero header */
+    #d-today-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    #d-today-left { flex: 1; }
+    #d-today-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 7px;
+    }
+    #d-today-big {
+      font-family: var(--font-head);
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    #d-today-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    #d-today-sub strong { color: var(--text-primary); font-weight: 600; }
+
+    /* Progress ring on the right of header */
+    #d-ring-wrap {
+      position: relative;
+      width: 76px;
+      height: 76px;
+      flex-shrink: 0;
+    }
+    #d-ring-wrap svg { width: 76px; height: 76px; }
+    #d-ring-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #d-ring-pct {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    #d-ring-lbl {
+      font-size: 9px;
+      color: var(--text-secondary);
+      letter-spacing: .04em;
+    }
+
+    /* Stat cards row */
+    #d-stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    /* Hourly chart panel */
+    #d-chart-panel {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 18px 20px;
+    }
+    #d-chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    #d-chart-title {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    #d-chart-legend {
+      display: flex;
+      gap: 14px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    #d-chart-canvas-wrap {
+      height: clamp(220px, 50vh, 320px);
+      position: relative;
+      background: linear-gradient(to top, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 100% 28px;
+      overflow: hidden;
+      border-radius: 20px;
+    }
+    #d-custom-chart {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .hourly-chart-wrapper {
+      display: flex;
+      flex: 1;
+      position: relative;
+      min-height: 100%;
+    }
+    .hourly-chart-y-axis {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 35px;
+      width: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 2;
+      padding-right: 8px;
+    }
+    .hourly-chart-y-axis-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.6);
+      text-align: right;
+      line-height: 1;
+    }
+    .hourly-chart-bars-container {
+      position: absolute;
+      left: 48px;
+      right: 0;
+      top: 0;
+      bottom: 28px;
+      display: flex;
+      align-items: flex-end;
+      gap: clamp(3px, 1vw, 6px);
+      padding: 0 6px;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .hourly-chart-hour-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      min-width: 0;
+      height: 100%;
+      gap: 6px;
+      position: relative;
+    }
+    .hourly-chart-bars {
+      display: flex;
+      gap: 2px;
+      align-items: flex-end;
+      width: 100%;
+      height: 100%;
+    }
+    .hourly-chart-bar {
+      flex: 1;
+      border-radius: 3px 3px 0 0;
+      min-height: 2px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .hourly-chart-bar:hover {
+      transform: scaleY(1.05);
+      opacity: 1;
+    }
+    .hourly-chart-bar--ig { background: linear-gradient(180deg, rgba(106,194,199,0.95), rgba(52,180,185,0.9)); }
+    .hourly-chart-bar--yt { background: linear-gradient(180deg, rgba(168,85,247,0.95), rgba(139,92,246,0.9)); }
+    .hourly-chart-hour-label {
+      font-size: 9px;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .chart-tooltip {
+      position: absolute;
+      z-index: 50;
+      min-width: 180px;
+      background: rgba(15,23,42,0.98);
+      border: 1px solid rgba(148,163,184,0.2);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #f8fafc;
+      font-size: 12px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-8px) translateX(-50%);
+      transition: all .15s ease;
+      white-space: nowrap;
+    }
+    .chart-tooltip.visible {
+      opacity: 1;
+      transform: translateY(0) translateX(-50%);
+    }
+    .chart-tooltip-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .chart-tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 6px;
+      font-size: 11px;
+    }
+    .chart-tooltip-row span:first-child { color: rgba(255,255,255,0.7); }
+    .chart-tooltip-row span:last-child { color: #fff; font-weight: 600; }
+
+    /* Session timeline rows */
+    #d-sessions-panel {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px 18px;
+    }
+    .session-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .session-row:last-child { border-bottom: none; }
+    .session-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .session-platform {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 80px;
+    }
+    .session-time {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+    .session-count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--blue);
+    }
+    .session-dur {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Scrollable comparison cards */
+    /* ── Crime scene: Distance in Perspective ── */
+    #d-crime-wrap {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* Left: big crime card */
+    #d-crime-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 20px 18px 16px;
+      text-align: center;
+    }
+    #d-crime-emoji { font-size: 72px; line-height: 1; display: block; margin-bottom: 10px; }
+    #d-crime-stamp {
+      display: inline-block;
+      border: 2.5px solid var(--red);
+      border-radius: 5px;
+      padding: 3px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--red);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      transform: rotate(-6deg);
+      margin-bottom: 10px;
+    }
+    #d-crime-stamp.warn {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+    #d-crime-lm-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    #d-crime-lm-height {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+    }
+    #d-crime-count-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    #d-crime-count {
+      font-size: 52px;
+      font-weight: 700;
+      color: var(--red);
+      line-height: 1;
+      font-family: var(--font-mono);
+    }
+    #d-crime-count-unit {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      text-align: left;
+    }
+    #d-crime-stack {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 2px;
+      margin-bottom: 10px;
+      min-height: 28px;
+    }
+    .crime-stack-em { font-size: 20px; line-height: 1; }
+    .crime-stack-em.faded { opacity: .2; }
+
+    /* Right: dramatic text + secondary cards */
+    #d-crime-right { min-width: 0; overflow: hidden; }
+    #d-crime-dramatic {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.35;
+      margin-bottom: 6px;
+      font-family: var(--font-head);
+    }
+    #d-crime-dramatic .hl-red   { color: var(--red); }
+    #d-crime-dramatic .hl-amber { color: var(--amber); }
+    #d-crime-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+    }
+    #d-crime-next-warn {
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--r-md);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--red);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    #d-crime-next-warn.amber-warn {
+      background: rgba(245,158,11,0.06);
+      border-color: rgba(245,158,11,0.2);
+      color: var(--amber);
+    }
+
+    /* Secondary landmark scroll row */
+    #d-comp-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      overflow-y: visible;
+      padding-bottom: 6px;
+      scroll-snap-type: x mandatory;
+    }
+    #d-comp-scroll::-webkit-scrollbar { height: 4px; }
+    #d-comp-scroll::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 2px; }
+    .d-comp-card {
+      flex-shrink: 0;
+      width: 130px;
+      scroll-snap-align: start;
+    }
+    .d-comp-card {
+      flex-shrink: 0;
+      width: 130px;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 10px 12px;
+    }
+    .d-comp-card__emoji { font-size: 20px; margin-bottom: 6px; }
+    .d-comp-card__label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .d-comp-card--exceeded .d-comp-card__label { color: var(--red); }
+    .d-comp-card--approaching .d-comp-card__label { color: var(--amber); }
+    .d-comp-card--locked .d-comp-card__label { color: var(--text-secondary); }
+    .d-comp-card--approaching { border-color: var(--amber-border) !important; }
+    .d-comp-card__name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 5px;
+    }
+    .d-comp-card__bar {
+      height: 4px;
+      background: var(--surface-3);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .d-comp-card__fill { height: 4px; border-radius: 999px; display: block; }
+    .d-comp-card--exceeded .d-comp-card__fill { background: var(--red); }
+    .d-comp-card--approaching .d-comp-card__fill { background: var(--amber); }
+    .d-comp-card--locked .d-comp-card__fill { background: var(--surface-3); }
+    .d-comp-card__pct {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    /* Context facts */
+    #d-context-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .fact-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px 16px;
+    }
+    .fact-card__icon {
+      font-size: 20px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .fact-card__num {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: var(--font-head);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .fact-card__text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    /* ── Calendar wrap (dashboard-specific) ── */
+    #d-cal-wrap {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px;
+    }
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .cal-nav__btn {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+      color: var(--text-primary);
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .cal-nav__month {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: .06em;
+      flex: 1;
+      text-align: center;
+    }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .cal-dow {
+      text-align: center;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      padding: 4px 0;
+    }
+    .cal-cell {
+      padding: 6px 2px;
+      border-radius: 8px;
+      background: var(--surface-2);
+      border: 1px solid transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      transition: all .15s ease;
+      font-size: 11px;
+      position: relative;
+      min-height: 34px;
+      overflow: hidden;
+    }
+    .cal-cell:hover { 
+      border-color: var(--border);
+      background: var(--surface-3);
+    }
+    .cal-cell.future {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .cal-cell.other-month { 
+      opacity: 0;
+      pointer-events: none;
+      background: transparent;
+      border: none;
+    }
+    .cal-cell.today { 
+      border-color: var(--border-md);
+    }
+    .cal-cell.today .cal-day-num {
+      color: var(--blue);
+      font-weight: 700;
+    }
+    .cal-cell.selected { 
+      background: rgba(79,142,247,0.18);
+      border-color: var(--blue);
+      box-shadow: inset 0 0 0 1.5px var(--blue);
+    }
+    .cal-cell.selected .cal-day-num { color: var(--blue); font-weight: 700; }
+    .cal-cell.selected .cal-pip { background: var(--blue); }
+    .cal-cell.selected .cal-cell-count { color: var(--blue); }
+    .cal-day-num { 
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .cal-pip { 
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-top: 1px;
+    }
+    .cal-cell.mid .cal-pip { background: var(--amber); }
+    .cal-cell.high .cal-pip { background: var(--red); }
+    .cal-cell.extreme .cal-pip { background: var(--purple); }
+    .cal-cell-count { 
+      font-size: 8px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .d-comp-card__fill { height: 5px; border-radius: 999px; min-width: 2px; display: block; }
+
+    /* ── Day Detail Panel (slides in below calendar) ── */
+    #cal-day-panel {
+      margin-top: 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-md);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+      max-height: 0;
+      opacity: 0;
+    }
+    #cal-day-panel.open {
+      max-height: 400px;
+      opacity: 1;
+    }
+    #cal-day-panel-inner {
+      padding: 13px 14px;
+    }
+    #cal-day-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 11px;
+    }
+    #cal-day-panel-date {
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    #cal-day-panel-close {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: all 0.15s;
+    }
+    #cal-day-panel-close:hover {
+      border-color: var(--border-md);
+      color: var(--text-primary);
+      background: var(--surface-3);
+    }
+
+    /* Stat mini-row inside panel */
+    .cdp-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-bottom: 11px;
+    }
+    .cdp-stat {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 8px 9px;
+      text-align: center;
+    }
+    .cdp-stat__val {
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--blue);
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+    .cdp-stat__lbl {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* Platform mini-bars */
+    .cdp-platform-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 11px;
+    }
+    .cdp-plat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cdp-plat__dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .cdp-plat__name {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 70px;
+    }
+    .cdp-plat__bar-wrap {
+      flex: 1;
+      height: 4px;
+      background: var(--surface-3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .cdp-plat__bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.4s cubic-bezier(0.4,1,0.6,1);
+    }
+    .cdp-plat__count {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-secondary);
+      min-width: 30px;
+      text-align: right;
+    }
+
+    /* Sessions inside panel */
+    .cdp-sessions {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .cdp-sess-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+    }
+    .cdp-sess-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .cdp-sess-plat {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 72px;
+    }
+    .cdp-sess-time {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      flex: 1;
+    }
+    .cdp-sess-count {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--blue);
+    }
+
+    /* No-data state inside panel */
+    .cdp-empty {
+      text-align: center;
+      padding: 18px 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* View full day button */
+    #cdp-view-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px;
+      font-family: var(--font-head);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      color: var(--blue);
+      background: rgba(79,142,247,0.08);
+      border: 1px solid rgba(79,142,247,0.22);
+      border-radius: var(--r-sm);
+      transition: all 0.15s;
+    }
+    #cdp-view-btn:hover {
+      background: rgba(79,142,247,0.16);
+      border-color: rgba(79,142,247,0.4);
+    }
+
+    /* Empty state overlay */
+    #d-empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 50px 30px;
+      text-align: center;
+      gap: 14px;
+    }
+    #d-empty-state .es-title {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    #d-empty-state .es-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 280px;
+    }
+
+    /* Share row at bottom */
+    #d-share-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.18);
+      border-radius: var(--r-md);
+    }
+    #d-share-text {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ────────────────────────────────────────────────────────
+     TOP NAVIGATION BAR
+     Shows the logo, selected date badge, and live status.
+──────────────────────────────────────────────────────────── -->
+<div id="d-nav">
+  <div id="d-nav-left">
+    <div class="topbar__logo">
+      <div class="topbar__logo-icon">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1L2 3.5V7C2 9.8 4.3 12.3 7 13C9.7 12.3 12 9.8 12 7V3.5L7 1Z" fill="white" opacity=".9"/>
+          <circle cx="7" cy="7.5" r="1.5" fill="white"/>
+        </svg>
+      </div>
+      <span class="d-nav-brand">FocusGuard Insights</span>
+    </div>
+    <span class="badge badge--blue" id="d-date-badge">Today</span>
+  </div>
+  <div id="d-nav-right">
+    <div class="live-dot">
+      <div class="live-dot__circle"></div>
+      <span style="font-size:11px;">Tracking active</span>
+    </div>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────────────────────
+     TWO-COLUMN BODY
+──────────────────────────────────────────────────────────── -->
+<div id="d-body">
+
+  <!-- ══════════════════════════════════════════════
+       LEFT SIDEBAR — Mascot, Calendar, Platforms
+  ══════════════════════════════════════════════ -->
+  <div id="d-sidebar">
+
+    <!-- Mascot card -->
+    <div id="side-mascot-card">
+      <div id="side-mascot-wrap"></div>
+      <div id="side-mood-pill" class="badge">Calm</div>
+      <div id="side-mascot-msg">"I'm watching. Start scrolling and I'll track everything."</div>
+    </div>
+
+    <!-- Calendar date picker -->
+    <div>
+      <div class="section-label">Activity calendar</div>
+      <div id="d-cal-wrap">
+        <div class="cal-nav" style="margin-bottom: 5px;">
+          <button class="cal-nav__btn" id="side-cal-prev">‹</button>
+          <span class="cal-nav__month" id="side-cal-month" style="font-size: 10px;">May 2026</span>
+          <button class="cal-nav__btn" id="side-cal-next">›</button>
+        </div>
+        <!-- Sidebar Mini Grid -->
+        <div class="cal-grid" id="side-cal-grid" style="gap: 3px;"></div>
+        <!-- Heatmap legend -->
+        <div id="cal-legend">
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--green);"></div> &lt;20</div>
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--amber);"></div> 20–59</div>
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--red);"></div> 60–149</div>
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--purple);"></div> 150+</div>
+        </div>
+      </div>
+
+      <!-- Day Detail Panel — slides open when a date is clicked -->
+      <div id="cal-day-panel">
+        <div id="cal-day-panel-inner">
+          <div id="cal-day-panel-header">
+            <div id="cal-day-panel-date">—</div>
+            <button id="cal-day-panel-close">✕</button>
+          </div>
+          <div id="cal-day-panel-body">
+            <!-- injected by JS -->
+          </div>
+          <button id="cdp-view-btn">View full day in dashboard →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Platform breakdown (Instagram vs YouTube) -->
+    <div>
+      <div class="section-label">Platform breakdown</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+
+        <!-- Instagram row -->
+        <div class="pb-item">
+          <div class="pb-header">
+            <div class="pb-name-row">
+              <div style="width:8px;height:8px;border-radius:50%;background:#e1306c;"></div>
+              Instagram Reels
+            </div>
+            <div class="pb-count font-mono" id="pb-ig-count">0 reels</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-bar__fill" id="pb-ig-bar" style="width:0%;background:#e1306c;"></div>
+          </div>
+          <div class="pb-stats">
+            <div class="pb-stat">Dist: <span id="pb-ig-dist">0m</span></div>
+            <div class="pb-stat">Time: <span id="pb-ig-time">0m</span></div>
+          </div>
+        </div>
+
+        <!-- YouTube row -->
+        <div class="pb-item">
+          <div class="pb-header">
+            <div class="pb-name-row">
+              <div style="width:8px;height:8px;border-radius:50%;background:#ff0000;"></div>
+              YouTube Shorts
+            </div>
+            <div class="pb-count font-mono" id="pb-yt-count">0 shorts</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-bar__fill" id="pb-yt-bar" style="width:0%;background:#ff0000;"></div>
+          </div>
+          <div class="pb-stats">
+            <div class="pb-stat">Dist: <span id="pb-yt-dist">0m</span></div>
+            <div class="pb-stat">Time: <span id="pb-yt-time">0m</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- end sidebar -->
+
+  <!-- ══════════════════════════════════════════════
+       MAIN CONTENT AREA
+  ══════════════════════════════════════════════ -->
+  <div id="d-main">
+
+    <!-- ── FULL CALENDAR VIEW (Archive) ── -->
+    <div id="view-archive" style="display:none;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+        <div>
+          <div id="d-today-eyebrow">Archive</div>
+          <div id="full-cal-month" style="font-family:var(--font-head); font-size:52px; font-weight:700; color:var(--text-primary);">May 2026</div>
+        </div>
+        <div class="cal-nav">
+          <button class="cal-nav__btn" id="cal-prev-btn" style="width:40px; height:40px;">‹</button>
+          <button class="cal-nav__btn" id="cal-next-btn" style="width:40px; height:40px;">›</button>
+        </div>
+      </div>
+
+      <div style="background:var(--surface-1); border:1px solid var(--border); border-radius:var(--r-lg); padding:24px;">
+         <div class="cal-grid" id="cal-grid" style="grid-template-columns: repeat(7, 1fr); gap: 10px;">
+           <!-- Full grid injected by JS -->
+         </div>
+      </div>
+
+      <!-- Bottom Legend -->
+      <div style="display:flex; gap:20px; margin-top:20px; padding:0 10px;">
+        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--green);"></div> Clean (&lt;20)</div>
+        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--amber);"></div> Moderate (20-60)</div>
+        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--red);"></div> Heavy (60-150)</div>
+        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--purple);"></div> Crisis (150+)</div>
+      </div>
+    </div>
+
+    <!-- ── DAILY DASHBOARD VIEW (Today) ── -->
+    <div id="view-today">
+
+      <!-- ── EMPTY STATE (shown when no data for selected date) ── -->
+      <div id="d-empty-state">
+        <div id="d-empty-mascot" style="width:100px;height:100px;"></div>
+        <div class="es-title">No data for this date</div>
+        <div class="es-sub">No reels or shorts were tracked on this day. Select another date from the calendar, or start scrolling today to see your stats here.</div>
+      </div>
+
+      <!-- ── DATA SECTIONS (hidden when no data) ── -->
+      <div id="d-data-sections">
+
+      <!-- Today's ascent header with progress ring -->
+      <div id="d-today-header">
+        <div id="d-today-left">
+          <div id="d-today-eyebrow">Today's ascent</div>
+          <div id="d-today-big">
+            <span id="d-total-reels">0</span>
+            <span style="font-family:var(--font-ui);font-size:20px;font-weight:400;color:var(--text-secondary);letter-spacing:0;"> reels</span>
+          </div>
+          <div id="d-today-sub">
+            You've scrolled <strong id="d-dist-text">0m</strong> today.
+            That's like <strong id="d-comp-text">—</strong>.
+          </div>
+        </div>
+        <!-- circular progress ring (% toward next landmark) -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div id="d-ring-wrap">
+            <svg viewBox="0 0 76 76" xmlns="http://www.w3.org/2000/svg">
+              <!-- track -->
+              <circle cx="38" cy="38" r="30" fill="none" stroke="#1a2440" stroke-width="6"/>
+              <!-- progress arc — dashoffset is set by JS -->
+              <circle id="d-ring-arc" cx="38" cy="38" r="30" fill="none"
+                stroke="#4f8ef7" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="188.5" stroke-dashoffset="188.5"
+                style="transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .6s cubic-bezier(.4,1,.6,1);"/>
+            </svg>
+            <div id="d-ring-overlay">
+              <div id="d-ring-pct" class="font-mono">0%</div>
+              <div id="d-ring-lbl">of next</div>
+            </div>
+          </div>
+          <div id="d-mood-badge" class="badge badge--blue">Calm</div>
+        </div>
+      </div>
+
+      <!-- Stat cards: distance / time / total -->
+      <div id="d-stat-row">
+        <div class="stat-chip">
+          <div class="stat-chip__label">Total distance</div>
+          <div class="stat-chip__value font-head" id="d-stat-dist" style="color:var(--blue);">0m</div>
+          <div class="stat-chip__sub">at 15 cm per reel</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip__label">Time lost today</div>
+          <div class="stat-chip__value font-head" id="d-stat-time" style="color:var(--amber);">0m</div>
+          <div class="stat-chip__sub">~1 min per reel avg</div>
+        </div>
+        <div class="stat-chip">
+          <div class="stat-chip__label">Total reels</div>
+          <div class="stat-chip__value font-head" id="d-stat-total" style="color:var(--purple);">0</div>
+          <div class="stat-chip__sub" id="d-stat-split">IG 0 · YT 0</div>
+        </div>
+      </div>
+
+      <!-- Hourly activity chart (Chart.js stacked bar + time line) -->
+      <div id="d-chart-panel">
+        <div id="d-chart-header">
+          <div id="d-chart-title">Hourly activity</div>
+          <div id="d-chart-legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#34b4b9;"></div>
+              Instagram Reels
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#8b5cf6;"></div>
+              YouTube Shorts
+            </div>
+            <div class="legend-item" style="gap:5px;">
+              <div style="width:20px;height:2px;background:rgba(245,158,11,0.6);border-radius:1px;"></div>
+              Time (min)
+            </div>
+          </div>
+        </div>
+        <div id="d-chart-canvas-wrap">
+          <canvas id="d-chart-canvas"></canvas>
+        </div>
+        <!-- Summary text below the graph -->
+        <div id="d-chart-summary" style="margin-top: 15px; padding-top: 12px; border-top: 1px solid var(--border); display: none;">
+          <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+            <span style="color: var(--text-primary); font-weight: 600;">Hourly Summary:</span> 
+            <span id="d-chart-summary-text">...</span>
+          </div>
+        </div>
+        <!-- No activity message shown if no sessions today -->
+        <div id="d-chart-empty" style="display:none;text-align:center;padding:30px 0;font-size:12px;color:var(--text-secondary);">
+          No activity recorded yet today.
+        </div>
+      </div>
+
+      <!-- Session timeline: each scroll session as a row -->
+      <div id="d-sessions-panel">
+        <div class="section-label" style="margin-bottom:10px;">Session timeline</div>
+        <div id="d-sessions-list">
+          <!-- Rows injected by JS -->
+        </div>
+        <div id="d-sessions-empty" style="display:none;font-size:12px;color:var(--text-secondary);padding:8px 0;">
+          No sessions recorded yet.
+        </div>
+      </div>
+
+      <!-- Distance in Perspective: Crime Scene -->
+      <div>
+        <div class="section-label" style="margin-bottom:12px;">Distance in perspective</div>
+        <div id="d-crime-wrap">
+
+          <!-- Left: big crime card -->
+          <div id="d-crime-card">
+            <span id="d-crime-emoji">📚</span>
+            <div id="d-crime-stamp">Exceeded</div>
+            <div id="d-crime-lm-name">Book stack</div>
+            <div id="d-crime-lm-height">1.5 m tall</div>
+            <div id="d-crime-count-row">
+              <div id="d-crime-count">1×</div>
+              <div id="d-crime-count-unit">you scrolled<br>this height</div>
+            </div>
+            <div id="d-crime-stack"></div>
+          </div>
+
+          <!-- Right: dramatic line + warning + scroll cards -->
+          <div id="d-crime-right">
+            <div id="d-crime-dramatic">—</div>
+            <div id="d-crime-sub">—</div>
+            <div id="d-crime-next-warn">—</div>
+            <div id="d-comp-scroll"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Context facts: what happened while you scrolled -->
+      <div>
+        <div class="section-label" style="margin-bottom:10px;">While you scrolled today…</div>
+        <div id="d-context-wrap">
+          <!-- Fact rows injected by JS -->
+        </div>
+      </div>
+
+      <!-- Share row at the bottom -->
+      <div id="d-share-row" style="display:flex;align-items:center;gap:12px;padding:13px 16px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.18);border-radius:var(--r-md);margin-top:20px;">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="11" cy="2.5" r="1.5" stroke="#ef4444" stroke-width="1.2"/>
+            <circle cx="3"  cy="7"   r="1.5" stroke="#ef4444" stroke-width="1.2"/>
+            <circle cx="11" cy="11.5" r="1.5" stroke="#ef4444" stroke-width="1.2"/>
+            <path d="M9.5 3.3L4.5 6M9.5 10.7L4.5 8" stroke="#ef4444" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div id="d-share-text" style="flex:1;font-size:12px;color:var(--text-secondary);line-height:1.45;">Loading your share card…</div>
+        <button id="d-share-btn" style="padding:8px 16px; border-radius:var(--r-md); border:1px solid var(--purple-border); background:var(--purple-dim); color:var(--purple); cursor:pointer; font-weight:600; font-size:12px; transition:all 0.2s;">Share damage 💀</button>
+      </div>
+
+    </div><!-- end d-data-sections -->
+  </div><!-- end d-main -->
+
+</div><!-- end d-body -->
+
+<!-- Scripts loaded in order: shared engines first, then dashboard logic -->
+<script src="mascot.js"></script>
+<script src="comparison.js"></script>
+<script src="dashboard.js"></script>
+
+</body>
+</html>
